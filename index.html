@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数字醒狮 - 岭南文化元宇宙</title>
+    <!-- 样式 -->
+    <style>
+        :root {
+            --primary-red: #C23B23;  /* 岭南红 */
+            --lion-gold: #F5D300;    /* 醒狮黄 */
+            --dark-bg: #1A1A1A;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: var(--dark-bg);
+            color: white;
+        }
+
+        /* 头部样式 */
+        .header {
+            background: linear-gradient(to right, var(--primary-red), #8B0000);
+            padding: 1rem;
+            text-align: center;
+        }
+
+        /* AR容器 */
+        #ar-viewer {
+            width: 100%;
+            height: 60vh;
+            border: 3px solid var(--lion-gold);
+            border-radius: 15px;
+            margin: 2rem 0;
+        }
+
+        /* NFT卡片 */
+        .nft-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem;
+            transition: transform 0.3s;
+        }
+
+        .nft-card:hover {
+            transform: translateY(-5px);
+        }
+
+        /* 响应式布局 */
+        @media (max-width: 768px) {
+            #ar-controls button {
+                width: 100%;
+                margin: 0.5rem 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 头部 -->
+    <header class="header">
+        <h1>🦁 数字醒狮</h1>
+        <p>体验岭南非遗的元宇宙之旅</p>
+    </header>
+
+    <!-- AR体验区 -->
+    <section class="container">
+        <div id="ar-viewer">
+            <!-- WebXR 内容将在此渲染 -->
+            <model-viewer 
+                src="models/lion_high.glb"
+                ar 
+                camera-controls 
+                auto-rotate
+                style="width: 100%; height: 100%;">
+            </model-viewer>
+        </div>
+        
+        <!-- AR控制按钮 -->
+        <div id="ar-controls">
+            <button onclick="startAR()" class="ar-button">
+                🚀 启动AR体验
+            </button>
+            <button onclick="toggleAnimation('dance')">
+                💃 舞狮表演
+            </button>
+        </div>
+    </section>
+
+    <!-- NFT铸造区 -->
+    <section class="container">
+        <h2>🎁 领取你的数字醒狮</h2>
+        <div class="nft-form">
+            <select id="lion-style">
+                <option value="foshan">佛山醒狮</option>
+                <option value="chaozhou">潮州醒狮</option>
+            </select>
+            <input type="color" id="lion-color" value="#F5D300">
+            <button onclick="mintNFT()">🪙 铸造NFT</button>
+        </div>
+        
+        <!-- NFT展示 -->
+        <div id="nft-gallery" class="grid"></div>
+    </section>
+
+    <!-- 文化传承区 -->
+    <section class="culture-section">
+        <article>
+            <h2>📜 醒狮文化</h2>
+            <video controls poster="poster.jpg">
+                <source src="culture/lion_dance.mp4" type="video/mp4">
+            </video>
+            <p>广府醒狮起源于...（文化介绍文本）</p>
+        </article>
+    </section>
+
+    <!-- 脚本 -->
+    <script type="module">
+        // 加载AR模型
+        import { ModelViewerElement } from 'https://unpkg.com/@google/model-viewer';
+
+        // AR启动函数
+        async function startAR() {
+            try {
+                const modelViewer = document.querySelector('model-viewer');
+                const session = await modelViewer.activateAR();
+                session.addEventListener('select', () => toggleAnimation());
+            } catch (error) {
+                alert('请使用支持AR的移动设备访问');
+            }
+        }
+
+        // NFT铸造函数
+        async function mintNFT() {
+            const style = document.getElementById('lion-style').value;
+            const color = document.getElementById('lion-color').value;
+            
+            const response = await fetch('/api/lion/mint-nft', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('jwt')}`
+                },
+                body: JSON.stringify({
+                    style: style,
+                    color: color
+                })
+            });
+
+            const result = await response.json();
+            if(result.success) {
+                displayNFT(result.nft);
+            }
+        }
+
+        function displayNFT(nftData) {
+            const gallery = document.getElementById('nft-gallery');
+            gallery.innerHTML += `
+                <div class="nft-card">
+                    <h3>${nftData.name}</h3>
+                    <img src="${nftData.image}" alt="数字醒狮NFT">
+                    <p>区块链哈希：${nftData.txHash}</p>
+                </div>
+            `;
+        }
+    </script>
+
+    <!-- 模型查看器 -->
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+</body>
+</html>
